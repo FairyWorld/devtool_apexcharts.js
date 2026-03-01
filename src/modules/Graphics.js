@@ -875,7 +875,7 @@ class Graphics {
         w,
       })
     }
-    this.ctx.events.fireEvent('dataPointMouseEnter', [
+    Graphics._fireEvent(w, 'dataPointMouseEnter', [
       e,
       this.ctx,
       { seriesIndex: i, dataPointIndex: j, w },
@@ -909,7 +909,7 @@ class Graphics {
         w,
       })
     }
-    this.ctx.events.fireEvent('dataPointMouseLeave', [
+    Graphics._fireEvent(w, 'dataPointMouseLeave', [
       e,
       this.ctx,
       { seriesIndex: i, dataPointIndex: j, w },
@@ -1011,7 +1011,7 @@ class Graphics {
     }
 
     if (e) {
-      this.ctx.events.fireEvent('dataPointSelection', [
+      Graphics._fireEvent(w, 'dataPointSelection', [
         e,
         this.ctx,
         {
@@ -1090,6 +1090,19 @@ class Graphics {
         this.pathMouseDown(targetNode.instance, e)
       }
     })
+  }
+
+  // Fire a named event from w.globals.events without requiring a ctx reference.
+  // Mirrors Events.fireEvent() but reads the registry directly from w so that
+  // pathMouseEnter/Leave/Down work even when this.ctx is null (Graphics instances
+  // created without a ctx arg for drawing-only use cases).
+  static _fireEvent(w, name, args) {
+    const evs = w.globals.events
+    if (!evs || !Object.prototype.hasOwnProperty.call(evs, name)) return
+    const handlers = evs[name]
+    for (let i = 0; i < handlers.length; i++) {
+      handlers[i].apply(null, args)
+    }
   }
 
   static _findDelegateTarget(node, boundary, selector) {

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bar + Exports — Tree-Shaking Demo</title>
+    <link href="../../samples/assets/styles.css" rel="stylesheet" />
+    <style>
+      body { max-width: 700px; margin: 0 auto; padding: 30px 20px; }
+      .back { font-size: 0.85rem; margin-bottom: 20px; }
+      .back a { color: #008FFB; text-decoration: none; }
+      .imports {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin-bottom: 24px;
+        overflow-x: auto;
+      }
+      .imports .kw  { color: #cba6f7; }
+      .imports .str { color: #a6e3a1; }
+      .imports .cm  { color: #6c7086; }
+      .note {
+        background: #fff3e0;
+        border-left: 4px solid #ff9800;
+        padding: 10px 14px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        margin-bottom: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="back"><a href="index.html">← All tree-shaking demos</a></p>
+
+    <h2>Bar + Export</h2>
+    <p>The <strong>exports feature</strong> adds PNG/SVG/CSV download to the toolbar. Without this import, the download menu items in the toolbar are absent.</p>
+
+    <div class="imports">
+      <span class="kw">import</span> ApexCharts <span class="kw">from</span> <span class="str">'../../src/entries/core.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/bar.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/legend.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/toolbar.js'</span>
+      <span class="cm">   // zoom/pan UI</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/exports.js'</span>
+      <span class="cm">  // PNG / SVG / CSV download</span>
+    </div>
+
+    <div class="note">
+      Click the <strong>hamburger menu (⋮)</strong> in the top-right of the chart to access PNG, SVG, and CSV export options.
+      These only appear because <code>exports.js</code> is imported.
+    </div>
+
+    <div id="chart"></div>
+
+    <script type="module">
+      import ApexCharts from '../../src/entries/core.js'
+      import '../../src/entries/bar.js'
+      import '../../src/features/legend.js'
+      import '../../src/features/toolbar.js'
+      import '../../src/features/exports.js'
+
+      const options = {
+        series: [
+          {
+            name: 'Net Profit',
+            data: [44, 55, 57, 56, 61, 58, 63, 60, 66],
+          },
+          {
+            name: 'Revenue',
+            data: [76, 85, 101, 98, 87, 105, 91, 114, 94],
+          },
+        ],
+        chart: {
+          type: 'bar',
+          height: 350,
+          toolbar: {
+            show: true,
+            tools: {
+              download: true,
+              selection: false,
+              zoom: false,
+              zoomin: false,
+              zoomout: false,
+              pan: false,
+              reset: false,
+            },
+          },
+        },
+        plotOptions: {
+          bar: { horizontal: false, columnWidth: '55%' },
+        },
+        dataLabels: { enabled: false },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+        title: {
+          text: 'Annual Performance (click ⋮ to export)',
+          align: 'left',
+        },
+        xaxis: {
+          categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+        },
+        yaxis: { title: { text: '$ (thousands)' } },
+        fill: { opacity: 1 },
+        tooltip: { y: { formatter: (val) => `$${val}k` } },
+      }
+
+      const chart = new ApexCharts(document.querySelector('#chart'), options)
+      chart.render()
+    </script>
+  </body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApexCharts — Tree-Shaking Demos</title>
+    <link href="../../samples/assets/styles.css" rel="stylesheet" />
+    <style>
+      body { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+      h1 { font-size: 1.8rem; margin-bottom: 8px; }
+      .subtitle { color: #666; margin-bottom: 40px; font-size: 0.95rem; }
+      .section { margin-bottom: 32px; }
+      .section h2 { font-size: 1.1rem; color: #333; border-bottom: 2px solid #008FFB; padding-bottom: 6px; margin-bottom: 16px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+      .card {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: box-shadow 0.15s, border-color 0.15s;
+      }
+      .card:hover { box-shadow: 0 4px 16px rgba(0,143,251,0.15); border-color: #008FFB; }
+      .card-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 6px; }
+      .card-desc { font-size: 0.8rem; color: #666; line-height: 1.4; }
+      .tag {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin-top: 8px;
+        margin-right: 4px;
+        background: #e8f4fe;
+        color: #0070cc;
+      }
+      .tag.green { background: #e6f9ee; color: #1a7a3a; }
+      .tag.orange { background: #fff3e0; color: #c76a00; }
+    </style>
+  </head>
+  <body>
+    <h1>ApexCharts Tree-Shaking Demos</h1>
+    <p class="subtitle">
+      Each demo uses <code>&lt;script type="module"&gt;</code> and imports only
+      the chart types and features it needs — no full bundle required.
+    </p>
+
+    <div class="section">
+      <h2>Minimal bundles — single chart type</h2>
+      <div class="grid">
+        <a class="card" href="minimal-line.html">
+          <div class="card-title">Minimal Line Chart</div>
+          <div class="card-desc">Core + line + tooltip + legend. The smallest useful line chart.</div>
+          <span class="tag">line</span>
+          <span class="tag">tooltip</span>
+          <span class="tag">legend</span>
+        </a>
+        <a class="card" href="minimal-bar.html">
+          <div class="card-title">Minimal Bar Chart</div>
+          <div class="card-desc">Core + bar + tooltip + legend. No toolbar, no annotations.</div>
+          <span class="tag">bar</span>
+          <span class="tag">tooltip</span>
+          <span class="tag">legend</span>
+        </a>
+        <a class="card" href="minimal-pie.html">
+          <div class="card-title">Minimal Pie Chart</div>
+          <div class="card-desc">Core + pie + tooltip. Legend omitted to show it's optional.</div>
+          <span class="tag">pie</span>
+          <span class="tag">tooltip</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Adding features incrementally</h2>
+      <div class="grid">
+        <a class="card" href="with-toolbar.html">
+          <div class="card-title">Line + Toolbar &amp; Zoom</div>
+          <div class="card-desc">Adds the toolbar feature on top of minimal line — zoom, pan, download icons.</div>
+          <span class="tag">line</span>
+          <span class="tag">toolbar</span>
+          <span class="tag green">+zoom/pan</span>
+        </a>
+        <a class="card" href="with-annotations.html">
+          <div class="card-title">Line + Annotations</div>
+          <div class="card-desc">Annotations feature added to a line chart — x/y reference lines and labels.</div>
+          <span class="tag">line</span>
+          <span class="tag">annotations</span>
+        </a>
+        <a class="card" href="with-exports.html">
+          <div class="card-title">Bar + Export</div>
+          <div class="card-desc">Export feature enables PNG/SVG/CSV download from the toolbar menu.</div>
+          <span class="tag">bar</span>
+          <span class="tag">toolbar</span>
+          <span class="tag orange">exports</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Multi-chart page</h2>
+      <div class="grid">
+        <a class="card" href="dashboard.html">
+          <div class="card-title">Dashboard — mixed types</div>
+          <div class="card-desc">One page, three chart types (line + bar + pie) loaded with a single shared import block.</div>
+          <span class="tag">line</span>
+          <span class="tag">bar</span>
+          <span class="tag">pie</span>
+          <span class="tag">tooltip</span>
+          <span class="tag">legend</span>
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

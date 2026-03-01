@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minimal Bar Chart — Tree-Shaking Demo</title>
+    <link href="../../samples/assets/styles.css" rel="stylesheet" />
+    <style>
+      body { max-width: 700px; margin: 0 auto; padding: 30px 20px; }
+      .back { font-size: 0.85rem; margin-bottom: 20px; }
+      .back a { color: #008FFB; text-decoration: none; }
+      .imports {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin-bottom: 24px;
+        overflow-x: auto;
+      }
+      .imports .kw  { color: #cba6f7; }
+      .imports .str { color: #a6e3a1; }
+      .imports .cm  { color: #6c7086; }
+    </style>
+  </head>
+  <body>
+    <p class="back"><a href="index.html">← All tree-shaking demos</a></p>
+
+    <h2>Minimal Bar Chart</h2>
+    <p>Imports: <strong>core + bar + tooltip + legend</strong>. Toolbar, zoom, exports and all other chart types are excluded.</p>
+
+    <div class="imports">
+      <span class="cm">// Only what this page needs</span><br>
+      <span class="kw">import</span> ApexCharts <span class="kw">from</span> <span class="str">'../../src/entries/core.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/bar.js'</span>
+      <span class="cm">      // bar, column, rangeBar, boxPlot</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/legend.js'</span>
+    </div>
+
+    <div id="chart"></div>
+
+    <script type="module">
+      import ApexCharts from '../../src/entries/core.js'
+      import '../../src/entries/bar.js'
+      import '../../src/features/legend.js'
+
+      const options = {
+        series: [
+          { name: 'Q1', data: [44, 55, 57, 56, 61, 58] },
+          { name: 'Q2', data: [76, 85, 101, 98, 87, 105] },
+          { name: 'Q3', data: [35, 41, 36, 26, 45, 48] },
+        ],
+        chart: {
+          type: 'bar',
+          height: 350,
+          toolbar: { show: false },
+        },
+        plotOptions: {
+          bar: { horizontal: false, columnWidth: '55%' },
+        },
+        dataLabels: { enabled: false },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+        title: {
+          text: 'Quarterly Sales by Product',
+          align: 'left',
+        },
+        xaxis: {
+          categories: ['Shoes', 'Shirts', 'Pants', 'Hats', 'Bags', 'Belts'],
+        },
+        yaxis: {
+          title: { text: 'Units sold' },
+        },
+        fill: { opacity: 1 },
+        tooltip: { y: { formatter: (val) => `${val} units` } },
+      }
+
+      const chart = new ApexCharts(document.querySelector('#chart'), options)
+      chart.render()
+    </script>
+  </body>
+</html>

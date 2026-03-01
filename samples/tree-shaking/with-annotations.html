@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Line + Annotations — Tree-Shaking Demo</title>
+    <link href="../../samples/assets/styles.css" rel="stylesheet" />
+    <style>
+      body { max-width: 700px; margin: 0 auto; padding: 30px 20px; }
+      .back { font-size: 0.85rem; margin-bottom: 20px; }
+      .back a { color: #008FFB; text-decoration: none; }
+      .imports {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin-bottom: 24px;
+        overflow-x: auto;
+      }
+      .imports .kw  { color: #cba6f7; }
+      .imports .str { color: #a6e3a1; }
+      .imports .cm  { color: #6c7086; }
+    </style>
+  </head>
+  <body>
+    <p class="back"><a href="index.html">← All tree-shaking demos</a></p>
+
+    <h2>Line + Annotations</h2>
+    <p>Adds the <strong>annotations feature</strong> to a minimal line chart. Without this import, annotation config is silently ignored.</p>
+
+    <div class="imports">
+      <span class="kw">import</span> ApexCharts <span class="kw">from</span> <span class="str">'../../src/entries/core.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/line.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/annotations.js'</span>
+      <span class="cm"> // x/y/point annotations</span>
+    </div>
+
+    <div id="chart"></div>
+
+    <script type="module">
+      import ApexCharts from '../../src/entries/core.js'
+      import '../../src/entries/line.js'
+      import '../../src/features/annotations.js'
+
+      const options = {
+        series: [
+          {
+            name: 'Temperature (°C)',
+            data: [4, 3, 10, 9, 29, 19, 22, 9, 12, 7, 19, 5],
+          },
+        ],
+        chart: {
+          type: 'line',
+          height: 350,
+          toolbar: { show: false },
+        },
+        stroke: { curve: 'smooth' },
+        title: {
+          text: 'Average Monthly Temperature',
+          align: 'left',
+        },
+        xaxis: {
+          categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        },
+        annotations: {
+          yaxis: [
+            {
+              y: 20,
+              borderColor: '#FF4560',
+              label: {
+                borderColor: '#FF4560',
+                style: { color: '#fff', background: '#FF4560' },
+                text: 'Hot threshold',
+              },
+            },
+            {
+              y: 5,
+              borderColor: '#008FFB',
+              label: {
+                borderColor: '#008FFB',
+                style: { color: '#fff', background: '#008FFB' },
+                text: 'Cold threshold',
+              },
+            },
+          ],
+          xaxis: [
+            {
+              x: 'Jun',
+              x2: 'Aug',
+              fillColor: '#FEB019',
+              opacity: 0.1,
+              label: {
+                borderColor: '#FEB019',
+                style: { color: '#fff', background: '#FEB019' },
+                text: 'Summer',
+              },
+            },
+          ],
+        },
+      }
+
+      const chart = new ApexCharts(document.querySelector('#chart'), options)
+      chart.render()
+    </script>
+  </body>
+</html>

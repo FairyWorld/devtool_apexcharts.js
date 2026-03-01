@@ -260,6 +260,7 @@ export default class Utils {
       ) || []
 
     for (let i = 0; i < initialSeries.length - 1; i++) {
+      if (!initialSeries[i]?.data || !initialSeries[i + 1]?.data) return true
       if (initialSeries[i].data.length !== initialSeries[i + 1].data.length) {
         sameLen = false
         break

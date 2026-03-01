@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Tree-Shaking Demo</title>
+    <link href="../../samples/assets/styles.css" rel="stylesheet" />
+    <style>
+      body { max-width: 1000px; margin: 0 auto; padding: 30px 20px; }
+      .back { font-size: 0.85rem; margin-bottom: 20px; }
+      .back a { color: #008FFB; text-decoration: none; }
+      .imports {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin-bottom: 28px;
+        overflow-x: auto;
+      }
+      .imports .kw  { color: #cba6f7; }
+      .imports .str { color: #a6e3a1; }
+      .imports .cm  { color: #6c7086; }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+        gap: 20px;
+      }
+      .chart-card {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+      }
+      .chart-card.full-width { grid-column: 1 / -1; }
+      .chart-label {
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #999;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="back"><a href="index.html">← All tree-shaking demos</a></p>
+
+    <h2>Dashboard — Three Chart Types, One Import Block</h2>
+    <p>
+      Three chart types (line, bar, pie) on one page. Chart types and features
+      are registered once at the top via <code>type="module"</code> — all three
+      charts share the same registration.
+    </p>
+
+    <div class="imports">
+      <span class="cm">// Register once — all charts on this page share these registrations</span><br>
+      <span class="kw">import</span> ApexCharts <span class="kw">from</span> <span class="str">'../../src/entries/core.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/line.js'</span>
+      <span class="cm">    // line, area, scatter, bubble, rangeArea</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/bar.js'</span>
+      <span class="cm">     // bar, column, rangeBar, boxPlot</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/pie.js'</span>
+      <span class="cm">     // pie, donut, polarArea</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/legend.js'</span>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="chart-card full-width">
+        <div class="chart-label">Line chart — monthly trend</div>
+        <div id="chart-line"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-label">Bar chart — category breakdown</div>
+        <div id="chart-bar"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-label">Pie chart — distribution</div>
+        <div id="chart-pie"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import ApexCharts from '../../src/entries/core.js'
+      import '../../src/entries/line.js'
+      import '../../src/entries/bar.js'
+      import '../../src/entries/pie.js'
+      import '../../src/features/legend.js'
+
+      // ── Line chart ──────────────────────────────────────────────────────
+      new ApexCharts(document.querySelector('#chart-line'), {
+        series: [
+          { name: 'Users', data: [120, 135, 160, 180, 155, 210, 240, 220, 270, 300, 285, 320] },
+          { name: 'Sessions', data: [200, 220, 260, 290, 240, 350, 400, 370, 440, 500, 480, 530] },
+        ],
+        chart: { type: 'line', height: 220, toolbar: { show: false }, sparkline: { enabled: false } },
+        stroke: { curve: 'smooth', width: 2 },
+        xaxis: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] },
+        tooltip: { shared: true, intersect: false },
+        legend: { position: 'top' },
+      }).render()
+
+      // ── Bar chart ────────────────────────────────────────────────────────
+      new ApexCharts(document.querySelector('#chart-bar'), {
+        series: [
+          { name: 'Desktop', data: [44, 55, 41, 67, 22, 43] },
+          { name: 'Mobile',  data: [13, 23, 20, 8,  13, 27] },
+        ],
+        chart: { type: 'bar', height: 280, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: false, columnWidth: '55%' } },
+        dataLabels: { enabled: false },
+        xaxis: { categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
+        tooltip: { shared: true, intersect: false },
+      }).render()
+
+      // ── Pie chart ────────────────────────────────────────────────────────
+      new ApexCharts(document.querySelector('#chart-pie'), {
+        series: [44, 55, 13, 43],
+        chart: { type: 'pie', height: 280 },
+        labels: ['Direct', 'Organic', 'Referral', 'Social'],
+        legend: { position: 'bottom' },
+        responsive: [{ breakpoint: 480, options: { chart: { width: 240 } } }],
+      }).render()
+    </script>
+  </body>
+</html>

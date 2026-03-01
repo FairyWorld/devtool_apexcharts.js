@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Minimal Pie Chart — Tree-Shaking Demo</title>
+    <link href="../../samples/assets/styles.css" rel="stylesheet" />
+    <style>
+      body { max-width: 700px; margin: 0 auto; padding: 30px 20px; }
+      .back { font-size: 0.85rem; margin-bottom: 20px; }
+      .back a { color: #008FFB; text-decoration: none; }
+      .imports {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin-bottom: 24px;
+        overflow-x: auto;
+      }
+      .imports .kw  { color: #cba6f7; }
+      .imports .str { color: #a6e3a1; }
+      .imports .cm  { color: #6c7086; }
+      .note {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 10px 14px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        margin-bottom: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="back"><a href="index.html">← All tree-shaking demos</a></p>
+
+    <h2>Minimal Pie Chart</h2>
+    <p>Imports: <strong>core + pie + tooltip</strong>. Legend is intentionally omitted to show it's a separate optional feature.</p>
+
+    <div class="imports">
+      <span class="cm">// Legend is NOT imported — the chart renders without it</span><br>
+      <span class="kw">import</span> ApexCharts <span class="kw">from</span> <span class="str">'../../src/entries/core.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/pie.js'</span>
+      <span class="cm">      // pie, donut, polarArea</span><br>
+      <span class="cm">// import '../../src/features/legend.js'  ← not loaded</span>
+    </div>
+
+    <div class="note">
+      The legend is not registered, so it will not appear even if <code>legend.show</code> is not explicitly set to <code>false</code>.
+      This is the tree-shaking contract: unregistered features are silently skipped.
+    </div>
+
+    <div id="chart"></div>
+
+    <script type="module">
+      import ApexCharts from '../../src/entries/core.js'
+      import '../../src/entries/pie.js'
+      // Legend NOT imported
+
+      const options = {
+        series: [44, 55, 13, 43, 22],
+        chart: {
+          type: 'pie',
+          height: 380,
+        },
+        labels: ['Electronics', 'Clothing', 'Food', 'Books', 'Sports'],
+        title: {
+          text: 'Sales by Category',
+          align: 'left',
+        },
+        responsive: [
+          {
+            breakpoint: 480,
+            options: {
+              chart: { width: 300 },
+            },
+          },
+        ],
+      }
+
+      const chart = new ApexCharts(document.querySelector('#chart'), options)
+      chart.render()
+    </script>
+  </body>
+</html>

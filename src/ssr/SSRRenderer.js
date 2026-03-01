@@ -151,6 +151,9 @@ ${svgString}
       querySelectorAll() {
         return []
       },
+      getElementsByClassName() {
+        return []
+      },
       getAttribute() {
         return null
       },

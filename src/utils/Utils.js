@@ -16,7 +16,10 @@ class Utils {
   }
 
   static isSafari() {
-    return /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    return (
+      Environment.isBrowser() &&
+      /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    )
   }
 
   // to extend defaults with user options

@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { createChartWithOptions } from './utils/utils.js'
 
 // ---------------------------------------------------------------------------
@@ -213,8 +214,29 @@ describe('KeyboardNavigation', () => {
       focusSvg(chart)
       expect(kn.seriesIndex).toBe(0)
       fireKey(chart, 'ArrowDown')
-      // shared=true → series switching suppressed
+      // shared=true AND x values align → series switching suppressed
       expect(kn.seriesIndex).toBe(0)
+      fireKey(chart, 'ArrowUp')
+      expect(kn.seriesIndex).toBe(0)
+    })
+
+    it('should ALLOW series switching when tooltip.shared=true but series have different x values (irregular time series)', () => {
+      // Both series have same length but different x values → isXoverlap returns
+      // false → tooltip falls back to individual mode → up/down should be allowed
+      const chart = chartWithKeyNav({
+        shared: true,
+        series: [
+          { name: 'A', data: [{ x: 100, y: 10 }, { x: 200, y: 20 }, { x: 300, y: 30 }] },
+          { name: 'B', data: [{ x: 150, y: 5 },  { x: 250, y: 15 }, { x: 350, y: 25 }] },
+        ],
+        extra: { xaxis: { type: 'numeric' } },
+      })
+      const kn = chart.ctx.keyboardNavigation
+      focusSvg(chart)
+      expect(kn.seriesIndex).toBe(0)
+      fireKey(chart, 'ArrowDown')
+      // x values differ at index 0 (100 vs 150) → not actually shared → allow series switch
+      expect(kn.seriesIndex).toBe(1)
       fireKey(chart, 'ArrowUp')
       expect(kn.seriesIndex).toBe(0)
     })
@@ -543,6 +565,53 @@ describe('KeyboardNavigation', () => {
       expect(() => {
         chart.ctx.events.fireEvent('legendClick', [chart.ctx, 0, chart.ctx.w])
       }).not.toThrow()
+    })
+  })
+
+  // =========================================================================
+  // Irregular time series — shared tooltip falls back to individual
+  // =========================================================================
+  describe('irregular time series tooltip mode', () => {
+    it('_showTooltipAxisLine calls drawSeriesTexts with shared=false when x values differ', () => {
+      const chart = chartWithKeyNav({
+        shared: true,
+        series: [
+          { name: 'A', data: [{ x: 100, y: 10 }, { x: 200, y: 20 }, { x: 300, y: 30 }] },
+          { name: 'B', data: [{ x: 150, y: 5 },  { x: 250, y: 15 }, { x: 350, y: 25 }] },
+        ],
+        extra: { xaxis: { type: 'numeric' } },
+      })
+      const kn = chart.ctx.keyboardNavigation
+      const ttCtx = chart.ctx.w.globals.tooltip
+      if (!ttCtx) return // tooltip feature not registered in this env
+
+      const spy = vi.spyOn(ttCtx.tooltipLabels, 'drawSeriesTexts').mockImplementation(() => {})
+      focusSvg(chart)
+      // At j=0: seriesX[0][0]=100 vs seriesX[1][0]=150 → isXoverlap(0)=false → shared=false
+      kn._showTooltipAxisLine(0, 0, ttCtx)
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ shared: false }))
+      spy.mockRestore()
+    })
+
+    it('_showTooltipAxisLine calls drawSeriesTexts with shared=true when x values match', () => {
+      const chart = chartWithKeyNav({
+        shared: true,
+        series: [
+          { name: 'A', data: [{ x: 100, y: 10 }, { x: 200, y: 20 }] },
+          { name: 'B', data: [{ x: 100, y: 5 },  { x: 200, y: 15 }] },
+        ],
+        extra: { xaxis: { type: 'numeric' } },
+      })
+      const kn = chart.ctx.keyboardNavigation
+      const ttCtx = chart.ctx.w.globals.tooltip
+      if (!ttCtx) return
+
+      const spy = vi.spyOn(ttCtx.tooltipLabels, 'drawSeriesTexts').mockImplementation(() => {})
+      focusSvg(chart)
+      // At j=0: seriesX[0][0]=100 vs seriesX[1][0]=100 → isXoverlap(0)=true, same length → shared=true
+      kn._showTooltipAxisLine(0, 0, ttCtx)
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ shared: true }))
+      spy.mockRestore()
     })
   })
 

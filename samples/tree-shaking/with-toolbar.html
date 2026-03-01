@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Line + Toolbar — Tree-Shaking Demo</title>
+    <link href="../../samples/assets/styles.css" rel="stylesheet" />
+    <style>
+      body { max-width: 700px; margin: 0 auto; padding: 30px 20px; }
+      .back { font-size: 0.85rem; margin-bottom: 20px; }
+      .back a { color: #008FFB; text-decoration: none; }
+      .imports {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin-bottom: 24px;
+        overflow-x: auto;
+      }
+      .imports .kw  { color: #cba6f7; }
+      .imports .str { color: #a6e3a1; }
+      .imports .cm  { color: #6c7086; }
+      .note {
+        background: #e8f5e9;
+        border-left: 4px solid #4caf50;
+        padding: 10px 14px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        margin-bottom: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="back"><a href="index.html">← All tree-shaking demos</a></p>
+
+    <h2>Line + Toolbar &amp; Zoom</h2>
+    <p>Adds <strong>toolbar + ZoomPanSelection</strong> on top of the minimal line chart. These are always registered together — zoom/pan controls require both modules.</p>
+
+    <div class="imports">
+      <span class="kw">import</span> ApexCharts <span class="kw">from</span> <span class="str">'../../src/entries/core.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/entries/line.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/legend.js'</span><br>
+      <span class="kw">import</span> <span class="str">'../../src/features/toolbar.js'</span>
+      <span class="cm">   // registers Toolbar + ZoomPanSelection</span>
+    </div>
+
+    <div class="note">
+      The toolbar feature registers both <code>Toolbar</code> and <code>ZoomPanSelection</code> in one import.
+      Try the zoom-in, zoom-out, and pan buttons in the toolbar above the chart.
+    </div>
+
+    <div id="chart"></div>
+
+    <script type="module">
+      import ApexCharts from '../../src/entries/core.js'
+      import '../../src/entries/line.js'
+      import '../../src/features/legend.js'
+      import '../../src/features/toolbar.js'
+
+      const options = {
+        series: [
+          {
+            name: 'Site Visits',
+            data: [null, null, null, null, null, null, null, 1000, 760, 1050, 900, 1110],
+          },
+          {
+            name: 'Page Views',
+            data: [1800, 1500, 1700, 1400, 1900, 2100, 1600, 2500, 2200, 2700, 2400, 2900],
+          },
+        ],
+        chart: {
+          type: 'line',
+          height: 350,
+          zoom: { enabled: true, type: 'x' },
+        },
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 2 },
+        title: {
+          text: 'Web Traffic (zoom in to explore)',
+          align: 'left',
+        },
+        xaxis: {
+          categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        },
+        tooltip: { shared: true, intersect: false },
+      }
+
+      const chart = new ApexCharts(document.querySelector('#chart'), options)
+      chart.render()
+    </script>
+  </body>
+</html>

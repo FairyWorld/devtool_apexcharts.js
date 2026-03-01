@@ -264,8 +264,8 @@ export default class Position {
       return
     }
 
-    cx = pointsArr[capturedSeries][j]?.[0]
-    cy = pointsArr[capturedSeries][j]?.[1] || 0
+    cx = pointsArr[capturedSeries]?.[j]?.[0]
+    cy = pointsArr[capturedSeries]?.[j]?.[1] || 0
 
     const point = w.dom.baseEl.querySelector(
       `.apexcharts-series[data\\:realIndex='${capturedSeries}'] .apexcharts-series-markers path`
@@ -308,7 +308,7 @@ export default class Position {
 
     const hoverSize = ttCtx.tooltipUtil.getHoverMarkerSize(activeSeries)
 
-    if (pointsArr[activeSeries]) {
+    if (pointsArr[activeSeries]?.[j]) {
       cx = pointsArr[activeSeries][j][0]
       cy = pointsArr[activeSeries][j][1]
     }

@@ -34,8 +34,10 @@ export default class Axes {
 
             if (this.w.config.grid.position === 'back') {
               const inner = this.w.dom.Paper.children()[1]
-              inner.remove()
-              this.w.dom.Paper.add(inner)
+              if (inner) {
+                inner.remove()
+                this.w.dom.Paper.add(inner)
+              }
             }
           }
         })

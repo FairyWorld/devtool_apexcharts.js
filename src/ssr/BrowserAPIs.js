@@ -25,6 +25,19 @@ export class BrowserAPIs {
   }
 
   /**
+   * Create an HTML element
+   * @param {string} tagName - Element tag name
+   * @returns {Element|SSRElement} HTML element
+   */
+  static createElement(tagName) {
+    if (Environment.isSSR()) {
+      if (!shim) this.init()
+      return shim.createElementNS(null, tagName)
+    }
+    return document.createElement(tagName)
+  }
+
+  /**
    * Create an SVG element with namespace
    * @param {string} namespaceURI - Namespace URI
    * @param {string} qualifiedName - Element tag name

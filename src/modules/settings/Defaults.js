@@ -89,7 +89,7 @@ const buildRangeTooltipHTML = (opts) => {
   let { color, seriesName, ylabel, start, end, seriesIndex, dataPointIndex } =
     opts
 
-  const formatter = opts.ctx.tooltip.tooltipLabels.getFormatters(seriesIndex)
+  const formatter = opts.w.globals.tooltip.tooltipLabels.getFormatters(seriesIndex)
 
   start = formatter.yLbFormatter(start)
   end = formatter.yLbFormatter(end)

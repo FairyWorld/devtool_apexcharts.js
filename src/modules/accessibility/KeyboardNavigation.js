@@ -184,11 +184,20 @@ export default class KeyboardNavigation {
       w.config.chart.accessibility.keyboard.navigation.wrapAround
 
     if (dSeries !== 0) {
-      // When tooltip.shared = true the same tooltip covers all series at a
-      // given x-position, so ↑/↓ series switching would show identical content.
-      // Suppress it — only ←/→ data-point navigation makes sense in shared mode.
+      // When tooltip.shared = true AND x values actually align across all
+      // series at the current index, the tooltip covers all series identically,
+      // so ↑/↓ series switching would show the same content — suppress it.
+      // For irregular time series the tooltip falls back to individual mode
+      // (isXoverlap returns false), so up/down navigation is meaningful there.
       const ttCtx = this.w.globals.tooltip
-      if (ttCtx && ttCtx.tConfig && ttCtx.tConfig.shared) return
+      if (ttCtx && ttCtx.tConfig && ttCtx.tConfig.shared) {
+        const j = this.dataPointIndex
+        const isActuallyShared =
+          ttCtx.tooltipUtil &&
+          ttCtx.tooltipUtil.isXoverlap(j) &&
+          ttCtx.tooltipUtil.isInitialSeriesSameLen()
+        if (isActuallyShared) return
+      }
 
       // Move between series (↑/↓)
       const total = this._getSeriesCount()
@@ -458,6 +467,13 @@ export default class KeyboardNavigation {
   _showTooltipBar(i, j, ttCtx) {
     const w = this.w
 
+    // Mirror the runtime check in handleStickyCapturedSeries: only use shared
+    // mode when x values actually align across all series at this index.
+    const shared =
+      ttCtx.tConfig.shared &&
+      (ttCtx.tooltipUtil.isXoverlap(j) || w.globals.isBarHorizontal) &&
+      ttCtx.tooltipUtil.isInitialSeriesSameLen()
+
     // Draw tooltip text content
     const rangeData = w.rangeData.seriesRange?.[i]?.[j]?.y?.[0]
     ttCtx.tooltipLabels.drawSeriesTexts({
@@ -466,7 +482,7 @@ export default class KeyboardNavigation {
       j,
       ...(rangeData?.y1 !== undefined && { y1: rangeData.y1 }),
       ...(rangeData?.y2 !== undefined && { y2: rangeData.y2 }),
-      shared: ttCtx.tConfig.shared,
+      shared,
     })
 
     // Apply the hover visual state on the bar.
@@ -531,7 +547,17 @@ export default class KeyboardNavigation {
   _showTooltipAxisLine(i, j, ttCtx) {
     const w = this.w
     const type = w.config.chart.type
-    const shared = ttCtx.tConfig.shared
+
+    // Mirror the runtime check in handleStickyCapturedSeries: tooltip.shared
+    // only applies when all series have the same x value at index j and the
+    // same number of data points.  For irregular time series (different x
+    // values across series), fall back to individual (non-shared) tooltip so
+    // only the currently focused series is shown — matching mouse behaviour.
+    const sharedConfigured = ttCtx.tConfig.shared
+    const shared =
+      sharedConfigured &&
+      ttCtx.tooltipUtil.isXoverlap(j) &&
+      ttCtx.tooltipUtil.isInitialSeriesSameLen()
 
     ttCtx.tooltipLabels.drawSeriesTexts({
       ttItems: ttCtx.ttItems,
@@ -559,14 +585,18 @@ export default class KeyboardNavigation {
     if (isScatterLike) {
       this._showScatterBubblePoint(i, j, ttCtx)
     } else if (hasVisibleMarkers) {
-      // Line/area with visible permanent markers — enlargePoints is fine here
-      // because shared mode shows all series at same x anyway.
-      ttCtx.marker.enlargePoints(j)
+      // Line/area with visible permanent markers
+      if (shared) {
+        ttCtx.marker.enlargePoints(j)
+      } else {
+        // irregular series — only enlarge the focused series' marker
+        ttCtx.tooltipPosition.moveDynamicPointOnHover(j, i)
+      }
     } else if (shared) {
-      // shared=true, no permanent markers → show dynamic point on all series
+      // shared=true, x values match — show dynamic point on all series
       ttCtx.tooltipPosition.moveDynamicPointsOnHover(j)
     } else {
-      // shared=false, no permanent markers → show dynamic point on this series only
+      // shared=false or x values differ — show dynamic point on this series only
       ttCtx.tooltipPosition.moveDynamicPointOnHover(j, i)
     }
   }

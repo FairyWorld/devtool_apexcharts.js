@@ -1,9 +1,7 @@
-import Annotations from './modules/annotations/Annotations'
 import Base from './modules/Base'
 import CoreUtils from './modules/CoreUtils'
 import DataLabels from './modules/DataLabels'
 import Defaults from './modules/settings/Defaults'
-import Exports from './modules/Exports'
 import Grid from './modules/axes/Grid'
 import Markers from './modules/Markers'
 import Range from './modules/Range'
@@ -13,6 +11,7 @@ import XAxis from './modules/axes/XAxis'
 import YAxis from './modules/axes/YAxis'
 import InitCtxVariables from './modules/helpers/InitCtxVariables'
 import Destroy from './modules/helpers/Destroy'
+import { register } from './modules/ChartFactory'
 import { addResizeListener, removeResizeListener } from './utils/Resize'
 import apexCSS from './assets/apexcharts.css'
 import { Environment } from './utils/Environment.js'
@@ -189,7 +188,9 @@ export default class ApexCharts {
       this.series.handleNoData()
     }
 
-    this.events.setupEventHandlers()
+    if (Environment.isBrowser()) {
+      this.events.setupEventHandlers()
+    }
 
     // Handle the data inputted by user and set some of the global variables (for eg, if data is datetime / numeric / category). Don't calculate the range / min / max at this time
     // Phase 1: return value is captured; named writers are stubs (mutations already wrote to gl).
@@ -219,7 +220,7 @@ export default class ApexCharts {
       gl.collapsedSeries.length === w.seriesData.series.length ||
       w.config.legend.showForSingleSeries
     ) {
-      this.legend.init()
+      this.legend?.init()
     }
 
     // check whether in multiple series, all series share the same X
@@ -232,8 +233,10 @@ export default class ApexCharts {
         // as we have minX and maxX values, determine the default DateTimeFormat for time series
         this.formatters.setLabelFormatters()
       }
-      this.ctx.toolbar.minX = w.globals.minX
-      this.ctx.toolbar.maxX = w.globals.maxX
+      if (this.ctx.toolbar) {
+        this.ctx.toolbar.minX = w.globals.minX
+        this.ctx.toolbar.maxX = w.globals.maxX
+      }
     }
 
     // we need to generate yaxis for heatmap separately as we are not showing numerics there, but seriesNames. There are some tweaks which are required for heatmap to align labels correctly which are done in below function
@@ -302,9 +305,12 @@ export default class ApexCharts {
       me.grid = new Grid(me.w, me)
       const elgrid = me.grid.drawGrid()
 
-      me.annotations = new Annotations(me.w, { theme: me.theme, timeScale: me.timeScale })
-      me.annotations.drawImageAnnos()
-      me.annotations.drawTextAnnos()
+      const AnnotationsCtor = InitCtxVariables._featureRegistry.get('annotations')
+      me.annotations = AnnotationsCtor
+        ? new AnnotationsCtor(me.w, { theme: me.theme, timeScale: me.timeScale })
+        : null
+      me.annotations?.drawImageAnnos()
+      me.annotations?.drawTextAnnos()
 
       if (w.config.grid.position === 'back') {
         if (elgrid) {
@@ -357,11 +363,11 @@ export default class ApexCharts {
         })
       }
 
-      me.annotations.drawAxesAnnotations()
+      me.annotations?.drawAxesAnnotations()
 
       if (!w.globals.noData) {
-        // draw tooltips at the end
-        if (w.config.tooltip.enabled && !w.globals.noData) {
+        // draw tooltips at the end (browser only — tooltip is DOM-heavy)
+        if (Environment.isBrowser() && w.config.tooltip.enabled && !w.globals.noData) {
           me.w.globals.tooltip.drawTooltip(graphData.xyRatios)
         }
 
@@ -370,10 +376,11 @@ export default class ApexCharts {
           w.config.chart.accessibility.keyboard.enabled &&
           w.config.chart.accessibility.keyboard.navigation.enabled
         ) {
-          me.keyboardNavigation.init()
+          me.keyboardNavigation?.init()
         }
 
         if (
+          Environment.isBrowser() &&
           w.globals.axisCharts &&
           (w.axisFlags.isXNumeric ||
             w.config.xaxis.convertedCatToNumeric ||
@@ -384,7 +391,7 @@ export default class ApexCharts {
             (w.config.chart.selection && w.config.chart.selection.enabled) ||
             (w.config.chart.pan && w.config.chart.pan.enabled)
           ) {
-            me.zoomPanSelection.init({
+            me.zoomPanSelection?.init({
               xyRatios: graphData.xyRatios,
             })
           }
@@ -404,7 +411,7 @@ export default class ApexCharts {
         }
 
         if (w.config.chart.toolbar.show && !w.globals.allSeriesCollapsed) {
-          me.toolbar.createToolbar()
+          me.toolbar?.createToolbar()
         }
       }
 
@@ -439,8 +446,8 @@ export default class ApexCharts {
         }
       })
     }
-    if (this.keyboardNavigation) {
-      this.keyboardNavigation.destroy()
+    if (this._keyboardNavigation) {
+      this._keyboardNavigation.destroy()
     }
     new Destroy(this.ctx).clear({ isUpdating: false })
   }
@@ -715,6 +722,30 @@ export default class ApexCharts {
     return getThemePalettes()
   }
 
+  /**
+   * Register additional chart types. Used by sub-entry points so that only
+   * the types they include are bundled.
+   *
+   * @param {Record<string, Function>} typeMap  e.g. { line: Line, area: Line }
+   */
+  static use(typeMap) {
+    register(typeMap)
+  }
+
+  /**
+   * Register optional feature modules (Exports, Legend, Toolbar,
+   * ZoomPanSelection, KeyboardNavigation, Annotations).
+   *
+   * Call this before rendering any chart. Feature entry files (e.g.
+   * `apexcharts/features/legend`) call this automatically when imported.
+   * Note: Tooltip is part of core and does not need to be registered.
+   *
+   * @param {Record<string, Function>} featureMap  e.g. { legend: Legend, exports: Exports }
+   */
+  static registerFeatures(featureMap) {
+    InitCtxVariables.registerFeatures(featureMap)
+  }
+
   toggleSeries(seriesName) {
     return this.series.toggleSeries(seriesName)
   }
@@ -758,7 +789,7 @@ export default class ApexCharts {
     if (context) {
       me = context
     }
-    me.annotations.addXaxisAnnotationExternal(opts, pushToMemory, me)
+    me.annotations?.addXaxisAnnotationExternal(opts, pushToMemory, me)
   }
 
   addYaxisAnnotation(opts, pushToMemory = true, context = undefined) {
@@ -766,7 +797,7 @@ export default class ApexCharts {
     if (context) {
       me = context
     }
-    me.annotations.addYaxisAnnotationExternal(opts, pushToMemory, me)
+    me.annotations?.addYaxisAnnotationExternal(opts, pushToMemory, me)
   }
 
   addPointAnnotation(opts, pushToMemory = true, context = undefined) {
@@ -774,7 +805,7 @@ export default class ApexCharts {
     if (context) {
       me = context
     }
-    me.annotations.addPointAnnotationExternal(opts, pushToMemory, me)
+    me.annotations?.addPointAnnotationExternal(opts, pushToMemory, me)
   }
 
   clearAnnotations(context = undefined) {
@@ -782,7 +813,7 @@ export default class ApexCharts {
     if (context) {
       me = context
     }
-    me.annotations.clearAnnotations(me)
+    me.annotations?.clearAnnotations(me)
   }
 
   removeAnnotation(id, context = undefined) {
@@ -790,7 +821,7 @@ export default class ApexCharts {
     if (context) {
       me = context
     }
-    me.annotations.removeAnnotation(me, id)
+    me.annotations?.removeAnnotation(me, id)
   }
 
   getChartArea() {
@@ -894,7 +925,7 @@ export default class ApexCharts {
   }
 
   zoomX(min, max) {
-    this.ctx.toolbar.zoomUpdateOptions(min, max)
+    this.ctx.toolbar?.zoomUpdateOptions(min, max)
   }
 
   setLocale(localeName) {
@@ -902,17 +933,18 @@ export default class ApexCharts {
   }
 
   dataURI(options) {
-    const exp = new Exports(this.ctx.w, this.ctx)
-    return exp.dataURI(options)
+    if (!this.ctx.exports) throw new Error('apexcharts: Exports feature is not registered. Import apexcharts/features/exports.')
+    return this.ctx.exports.dataURI(options)
   }
 
   getSvgString(scale) {
-    return new Exports(this.ctx.w, this.ctx).getSvgString(scale)
+    if (!this.ctx.exports) throw new Error('apexcharts: Exports feature is not registered. Import apexcharts/features/exports.')
+    return this.ctx.exports.getSvgString(scale)
   }
 
   exportToCSV(options = {}) {
-    const exp = new Exports(this.ctx.w, this.ctx)
-    return exp.exportToCSV(options)
+    if (!this.ctx.exports) throw new Error('apexcharts: Exports feature is not registered. Import apexcharts/features/exports.')
+    return this.ctx.exports.exportToCSV(options)
   }
 
   paper() {

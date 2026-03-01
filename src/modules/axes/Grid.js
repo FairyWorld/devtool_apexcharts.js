@@ -140,7 +140,7 @@ class Grid {
     w.dom.elGridRectBarMask.appendChild(w.dom.elGridRectBar.node)
     w.dom.elGridRectMarkerMask.appendChild(w.dom.elGridRectMarker.node)
 
-    const defs = w.dom.baseEl.querySelector('defs')
+    const defs = w.dom.elDefs.node
     defs.appendChild(w.dom.elGridRectMask)
     defs.appendChild(w.dom.elGridRectBarMask)
     defs.appendChild(w.dom.elGridRectMarkerMask)

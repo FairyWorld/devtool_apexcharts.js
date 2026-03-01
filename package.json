@@ -35,6 +35,65 @@
       "import": "./dist/apexcharts.esm.js",
       "require": "./dist/apexcharts.common.js"
     },
+    "./line": {
+      "types": "./types/apexcharts.d.ts",
+      "import": "./dist/line.esm.js",
+      "require": "./dist/line.common.js"
+    },
+    "./bar": {
+      "types": "./types/apexcharts.d.ts",
+      "import": "./dist/bar.esm.js",
+      "require": "./dist/bar.common.js"
+    },
+    "./candlestick": {
+      "types": "./types/apexcharts.d.ts",
+      "import": "./dist/candlestick.esm.js",
+      "require": "./dist/candlestick.common.js"
+    },
+    "./pie": {
+      "types": "./types/apexcharts.d.ts",
+      "import": "./dist/pie.esm.js",
+      "require": "./dist/pie.common.js"
+    },
+    "./radial": {
+      "types": "./types/apexcharts.d.ts",
+      "import": "./dist/radial.esm.js",
+      "require": "./dist/radial.common.js"
+    },
+    "./heatmap": {
+      "types": "./types/apexcharts.d.ts",
+      "import": "./dist/heatmap.esm.js",
+      "require": "./dist/heatmap.common.js"
+    },
+    "./core": {
+      "types": "./types/apexcharts.d.ts",
+      "import": "./dist/core.esm.js",
+      "require": "./dist/core.common.js"
+    },
+    "./features/exports": {
+      "import": "./dist/features/exports.esm.js",
+      "require": "./dist/features/exports.common.js"
+    },
+    "./features/legend": {
+      "import": "./dist/features/legend.esm.js",
+      "require": "./dist/features/legend.common.js"
+    },
+    "./features/toolbar": {
+      "import": "./dist/features/toolbar.esm.js",
+      "require": "./dist/features/toolbar.common.js"
+    },
+    "./features/annotations": {
+      "import": "./dist/features/annotations.esm.js",
+      "require": "./dist/features/annotations.common.js"
+    },
+    "./features/keyboard": {
+      "import": "./dist/features/keyboard.esm.js",
+      "require": "./dist/features/keyboard.common.js"
+    },
+    "./features/all": {
+      "import": "./dist/features/all.esm.js",
+      "require": "./dist/features/all.common.js"
+    },
     "./dist/*": "./dist/*",
     "./src/*": "./src/*",
     "./types/*": "./types/*",
@@ -50,6 +109,7 @@
   ],
   "scripts": {
     "dev": "vite build --watch --mode development",
+    "serve": "vite",
     "build": "node build/vite-build.mjs && vite build --mode ssr",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -61,7 +121,10 @@
     "e2e:update": "node tests/e2e/samples.js update",
     "e2e:ci": "node tests/e2e/samples.js test:ci",
     "build:samples": "node samples/source/index.js generate",
-    "prepare": "npx simple-git-hooks"
+    "interaction": "playwright test --config=tests/interaction/playwright.config.mjs",
+    "interaction:headed": "playwright test --config=tests/interaction/playwright.config.mjs --headed",
+    "prepare": "npx simple-git-hooks",
+    "build:demos": "node build/build-demos.mjs"
   },
   "simple-git-hooks": {
     "pre-push": "npm run lint >&2"
@@ -74,6 +137,7 @@
     "@babel/preset-env": "7.29.0",
     "@blazediff/core": "1.0.0",
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "1.58.2",
     "@rollup/plugin-terser": "0.4.4",
     "@vitest/coverage-v8": "^4.0.18",
     "babel-jest": "30.2.0",
@@ -110,7 +174,9 @@
   "sideEffects": [
     "*.css",
     "./src/svg/index.js",
-    "./src/modules/helpers/InitCtxVariables.js"
+    "./src/modules/helpers/InitCtxVariables.js",
+    "./src/entries/*.js",
+    "./src/features/*.js"
   ],
   "keywords": [
     "charts",

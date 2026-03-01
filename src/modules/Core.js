@@ -9,18 +9,7 @@ import TimeScale from './TimeScale'
 import { Environment } from '../utils/Environment.js'
 import { BrowserAPIs } from '../ssr/BrowserAPIs.js'
 import { SVGNS } from '../svg/math'
-import {
-  Line,
-  Bar,
-  BarStacked,
-  BoxCandleStick,
-  Pie,
-  Radar,
-  Radial,
-  RangeBar,
-  HeatMap,
-  Treemap,
-} from './ChartFactory'
+import { getChartClass } from './ChartFactory'
 
 /**
  * ApexCharts Core Class responsible for major calculations and creating elements.
@@ -248,12 +237,44 @@ export default class Core {
     }
     gl.comboCharts ||= comboCount > 0
 
-    const line = new Line(ctx.w, ctx, xyRatios)
-    const boxCandlestick = new BoxCandleStick(ctx.w, ctx, xyRatios)
-    ctx.pie = new Pie(ctx.w, ctx)
-    const radialBar = new Radial(ctx.w, ctx)
-    ctx.rangeBar = new RangeBar(ctx.w, ctx, xyRatios)
-    const radar = new Radar(ctx.w, ctx)
+    // Lazily resolve chart classes — only look up types that are actually used.
+    // Eagerly calling getChartClass() for every type would break tree-shaking:
+    // a page that only registers 'line' would throw when 'candlestick' etc.
+    // are looked up even though they are never rendered.
+    const needsLine =
+      seriesTypes.line.series.length > 0 ||
+      seriesTypes.area.series.length > 0 ||
+      seriesTypes.scatter.series.length > 0 ||
+      seriesTypes.bubble.series.length > 0 ||
+      seriesTypes.rangeArea.series.length > 0 ||
+      (!gl.comboCharts &&
+        ['line', 'area', 'scatter', 'bubble', 'rangeArea'].includes(
+          cnf.chart.type,
+        ))
+    const line = needsLine
+      ? new (getChartClass('line'))(ctx.w, ctx, xyRatios)
+      : null
+
+    const needsCandlestick =
+      seriesTypes.candlestick.series.length > 0 ||
+      seriesTypes.boxPlot.series.length > 0 ||
+      (!gl.comboCharts && ['candlestick', 'boxPlot'].includes(cnf.chart.type))
+    const boxCandlestick = needsCandlestick
+      ? new (getChartClass('candlestick'))(ctx.w, ctx, xyRatios)
+      : null
+
+    const needsPie =
+      !gl.comboCharts &&
+      ['pie', 'donut', 'polarArea'].includes(cnf.chart.type)
+    ctx.pie = needsPie ? new (getChartClass('pie'))(ctx.w, ctx) : null
+
+    const needsRangeBar =
+      seriesTypes.rangeBar.series.length > 0 ||
+      (!gl.comboCharts && cnf.chart.type === 'rangeBar')
+    ctx.rangeBar = needsRangeBar
+      ? new (getChartClass('rangeBar'))(ctx.w, ctx, xyRatios)
+      : null
+
     let elGraph = []
 
     if (gl.comboCharts) {
@@ -270,12 +291,12 @@ export default class Core {
       }
       if (seriesTypes.bar.series.length > 0) {
         if (cnf.chart.stacked) {
-          const barStacked = new BarStacked(ctx.w, ctx, xyRatios)
+          const barStacked = new (getChartClass('barStacked'))(ctx.w, ctx, xyRatios)
           elGraph.push(
             barStacked.draw(seriesTypes.bar.series, seriesTypes.bar.i),
           )
         } else {
-          ctx.bar = new Bar(ctx.w, ctx, xyRatios)
+          ctx.bar = new (getChartClass('bar'))(ctx.w, ctx, xyRatios)
           elGraph.push(ctx.bar.draw(seriesTypes.bar.series, seriesTypes.bar.i))
         }
       }
@@ -326,7 +347,7 @@ export default class Core {
         )
       }
       if (seriesTypes.scatter.series.length > 0) {
-        const scatterLine = new Line(ctx.w, ctx, xyRatios, true)
+        const scatterLine = new (getChartClass('line'))(ctx.w, ctx, xyRatios, true)
         elGraph.push(
           scatterLine.draw(
             seriesTypes.scatter.series,
@@ -336,7 +357,7 @@ export default class Core {
         )
       }
       if (seriesTypes.bubble.series.length > 0) {
-        const bubbleLine = new Line(ctx.w, ctx, xyRatios, true)
+        const bubbleLine = new (getChartClass('line'))(ctx.w, ctx, xyRatios, true)
         elGraph.push(
           bubbleLine.draw(
             seriesTypes.bubble.series,
@@ -346,7 +367,8 @@ export default class Core {
         )
       }
     } else {
-      switch (cnf.chart.type) {
+      const type = cnf.chart.type
+      switch (type) {
         case 'line':
           elGraph = line.draw(this.w.seriesData.series, 'line')
           break
@@ -355,23 +377,19 @@ export default class Core {
           break
         case 'bar':
           if (cnf.chart.stacked) {
-            const barStacked = new BarStacked(ctx.w, ctx, xyRatios)
+            const barStacked = new (getChartClass('barStacked'))(ctx.w, ctx, xyRatios)
             elGraph = barStacked.draw(this.w.seriesData.series)
           } else {
-            ctx.bar = new Bar(ctx.w, ctx, xyRatios)
+            ctx.bar = new (getChartClass('bar'))(ctx.w, ctx, xyRatios)
             elGraph = ctx.bar.draw(this.w.seriesData.series)
           }
           break
-        case 'candlestick': {
-          const candleStick = new BoxCandleStick(ctx.w, ctx, xyRatios)
-          elGraph = candleStick.draw(this.w.seriesData.series, 'candlestick')
+        case 'candlestick':
+          elGraph = boxCandlestick.draw(this.w.seriesData.series, 'candlestick')
           break
-        }
-        case 'boxPlot': {
-          const boxPlot = new BoxCandleStick(ctx.w, ctx, xyRatios)
-          elGraph = boxPlot.draw(this.w.seriesData.series, cnf.chart.type)
+        case 'boxPlot':
+          elGraph = boxCandlestick.draw(this.w.seriesData.series, type)
           break
-        }
         case 'rangeBar':
           elGraph = ctx.rangeBar.draw(this.w.seriesData.series)
           break
@@ -384,12 +402,12 @@ export default class Core {
           )
           break
         case 'heatmap': {
-          const heatmap = new HeatMap(ctx.w, ctx, xyRatios)
+          const heatmap = new (getChartClass('heatmap'))(ctx.w, ctx, xyRatios)
           elGraph = heatmap.draw(this.w.seriesData.series)
           break
         }
         case 'treemap': {
-          const treemap = new Treemap(ctx.w, ctx)
+          const treemap = new (getChartClass('treemap'))(ctx.w, ctx)
           elGraph = treemap.draw(this.w.seriesData.series)
           break
         }
@@ -398,12 +416,16 @@ export default class Core {
         case 'polarArea':
           elGraph = ctx.pie.draw(this.w.seriesData.series)
           break
-        case 'radialBar':
+        case 'radialBar': {
+          const radialBar = new (getChartClass('radialBar'))(ctx.w, ctx)
           elGraph = radialBar.draw(this.w.seriesData.series)
           break
-        case 'radar':
+        }
+        case 'radar': {
+          const radar = new (getChartClass('radar'))(ctx.w, ctx)
           elGraph = radar.draw(this.w.seriesData.series)
           break
+        }
         default:
           elGraph = line.draw(this.w.seriesData.series)
       }
@@ -461,7 +483,7 @@ export default class Core {
       height: gl.svgHeight,
     })
 
-    if (heightUnit !== '%') {
+    if (heightUnit !== '%' && Environment.isBrowser()) {
       const offsetY = cnf.chart.sparkline.enabled
         ? 0
         : gl.axisCharts
@@ -531,7 +553,9 @@ export default class Core {
 
     this.w.dom.elWrap.style.height = `${newHeight}px`
     Graphics.setAttrs(this.w.dom.Paper.node, { height: newHeight })
-    this.w.dom.Paper.node.parentNode.parentNode.style.minHeight = `${newHeight}px`
+    if (Environment.isBrowser()) {
+      this.w.dom.Paper.node.parentNode.parentNode.style.minHeight = `${newHeight}px`
+    }
   }
 
   coreCalculations() {

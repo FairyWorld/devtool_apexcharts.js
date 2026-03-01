@@ -109,6 +109,25 @@ class SSRElement {
     return root
   }
 
+  querySelector() {
+    return null
+  }
+
+  querySelectorAll() {
+    return []
+  }
+
+  getElementsByClassName() {
+    return []
+  }
+
+  addEventListener() {}
+  removeEventListener() {}
+
+  get childNodes() {
+    return this.children
+  }
+
   toString() {
     let attrs = ''
     this.attributes.forEach((value, key) => {

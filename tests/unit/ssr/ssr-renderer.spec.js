@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { SSRRenderer } from '../../../src/ssr/SSRRenderer.js'
+import { BrowserAPIs } from '../../../src/ssr/BrowserAPIs.js'
+
+// Register all chart types and features as side-effects. SSRRenderer imports the
+// bare ApexCharts class directly, so chart types must be pre-registered here.
+import '../../../src/entries/full.js'
 
 describe('SSRRenderer', () => {
   describe('_encodeConfig()', () => {
@@ -189,6 +194,121 @@ describe('SSRRenderer', () => {
 
       // _applyScale only works when both width AND height are present
       expect(scaled).toBe('<svg height="300"></svg>')
+    })
+  })
+
+  // ── End-to-end renderToString / renderToHTML ──────────────────────────────
+  //
+  // These tests simulate a true Node.js (SSR) environment by nulling out
+  // window, document, and navigator — the same technique used by
+  // environment.spec.js. BrowserAPIs shim is reset between tests so
+  // state from one render doesn't leak into the next.
+
+  describe('renderToString() — SSR environment simulation', () => {
+    let savedWindow, savedDocument, savedNavigator
+
+    beforeEach(() => {
+      savedWindow = global.window
+      savedDocument = global.document
+      savedNavigator = global.navigator
+
+      // Simulate Node.js: no window, no document, no navigator
+      global.window = undefined
+      global.document = undefined
+      global.navigator = undefined
+
+      // Reset the BrowserAPIs shim so each test starts clean
+      BrowserAPIs._resetShim()
+    })
+
+    afterEach(() => {
+      global.window = savedWindow
+      global.document = savedDocument
+      global.navigator = savedNavigator
+      BrowserAPIs._resetShim()
+    })
+
+    it('renders a line chart to an SVG string without throwing', async () => {
+      const svg = await SSRRenderer.renderToString({
+        series: [{ name: 'Sales', data: [30, 40, 35, 50, 49, 60] }],
+        chart: { type: 'line' },
+        xaxis: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+      })
+
+      expect(typeof svg).toBe('string')
+      expect(svg).toContain('<svg')
+      expect(svg).toContain('</svg>')
+    })
+
+    it('renders a bar chart to an SVG string without throwing', async () => {
+      const svg = await SSRRenderer.renderToString({
+        series: [{ name: 'Revenue', data: [10, 20, 30] }],
+        chart: { type: 'bar' },
+        xaxis: { categories: ['Q1', 'Q2', 'Q3'] },
+      })
+
+      expect(typeof svg).toBe('string')
+      expect(svg).toContain('<svg')
+    })
+
+    it('renders a pie chart to an SVG string without throwing', async () => {
+      const svg = await SSRRenderer.renderToString({
+        series: [44, 55, 13],
+        chart: { type: 'pie' },
+        labels: ['Team A', 'Team B', 'Team C'],
+      })
+
+      expect(typeof svg).toBe('string')
+      expect(svg).toContain('<svg')
+    })
+
+    it('respects custom width and height', async () => {
+      const svg = await SSRRenderer.renderToString(
+        {
+          series: [{ data: [1, 2, 3] }],
+          chart: { type: 'line' },
+        },
+        { width: 600, height: 400 }
+      )
+
+      expect(svg).toMatch(/width="600"/)
+      expect(svg).toMatch(/height="400"/)
+    })
+
+    it('applies scale factor to the output SVG dimensions', async () => {
+      const svg = await SSRRenderer.renderToString(
+        {
+          series: [{ data: [1, 2, 3] }],
+          chart: { type: 'line' },
+        },
+        { width: 400, height: 300, scale: 2 }
+      )
+
+      expect(svg).toMatch(/width="800"/)
+      expect(svg).toMatch(/height="600"/)
+    })
+
+    it('renderToHTML wraps the SVG in a hydration-ready div', async () => {
+      const html = await SSRRenderer.renderToHTML({
+        series: [{ data: [1, 2, 3] }],
+        chart: { type: 'line' },
+      })
+
+      expect(html).toContain('data-apexcharts-hydrate')
+      expect(html).toContain('data-apexcharts-config=')
+      expect(html).toContain('<svg')
+      expect(html).toContain('apexcharts-ssr-wrapper')
+    })
+
+    it('renders multiple chart types in sequence without state leaking', async () => {
+      const types = ['line', 'bar']
+      for (const type of types) {
+        const svg = await SSRRenderer.renderToString({
+          series: [{ data: [1, 2, 3] }],
+          chart: { type },
+        })
+        expect(svg).toContain('<svg')
+      }
     })
   })
 })

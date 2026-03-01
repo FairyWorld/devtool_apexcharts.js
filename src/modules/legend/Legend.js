@@ -6,6 +6,7 @@ import Utils from '../../utils/Utils'
 import Helpers from './Helpers'
 import Markers from '../Markers'
 import { Environment } from '../../utils/Environment.js'
+import { BrowserAPIs } from '../../ssr/BrowserAPIs.js'
 
 /**
  * ApexCharts Legend Class to draw legend.
@@ -66,7 +67,7 @@ class Legend {
 
   createLegendMarker({ i, fillcolor }) {
     const w = this.w
-    const elMarker = document.createElement('span')
+    const elMarker = BrowserAPIs.createElement('span')
     elMarker.classList.add('apexcharts-legend-marker')
 
     const mShape = w.config.legend.markers.shape || w.config.markers.shape
@@ -177,7 +178,7 @@ class Legend {
       w.config.legend.clusterGroupedSeries
     ) {
       w.labelData.seriesGroups.forEach((_, gi) => {
-        legendGroups[gi] = document.createElement('div')
+        legendGroups[gi] = BrowserAPIs.createElement('div')
         legendGroups[gi].classList.add(
           'apexcharts-legend-group',
           `apexcharts-legend-group-${gi}`
@@ -232,7 +233,7 @@ class Legend {
         elMarker.classList.add('apexcharts-inactive-legend')
       }
 
-      const elLegend = document.createElement('div')
+      const elLegend = BrowserAPIs.createElement('div')
 
       // accessibility attributes
       if (
@@ -253,7 +254,7 @@ class Legend {
         elLegend.setAttribute('aria-pressed', isCollapsed ? 'true' : 'false')
       }
 
-      const elLegendText = document.createElement('span')
+      const elLegendText = BrowserAPIs.createElement('span')
       elLegendText.classList.add('apexcharts-legend-text')
       elLegendText.innerHTML = Array.isArray(text) ? text.join(' ') : text
 

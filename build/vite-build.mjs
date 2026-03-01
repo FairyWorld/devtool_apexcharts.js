@@ -2,18 +2,30 @@ import { build } from 'vite'
 import { readFileSync } from 'fs'
 import { gzipSync } from 'zlib'
 import chalk from 'chalk'
+import { SUB_ENTRIES } from '../vite.config.mjs'
 
-// Build all formats in a single pass
+// Build all formats in two passes:
+//   Pass 1 — full bundle (apexcharts.esm.js / .common.js / .js / .min.js)
+//   Pass 2 — sub-entries (line/bar/etc. .esm.js / .common.js) one at a time
 async function buildAll() {
   console.log(chalk.blue('Building ApexCharts...'))
 
   try {
-    console.log(chalk.cyan('\n📦 Building all formats...'))
+    // ── Pass 1: full bundle ───────────────────────────────────────────────
+    console.log(chalk.cyan('\n📦 Building full bundle (all 4 formats)...'))
     await build({ mode: 'production' })
 
-    // Show build stats
-    showBuildStats()
+    // ── Pass 2: sub-entries (ESM + CJS only, no UMD) ─────────────────────
+    console.log(chalk.cyan('\n📦 Building sub-entries...'))
+    for (const [name, file] of Object.entries(SUB_ENTRIES)) {
+      process.stdout.write(chalk.gray(`  • ${name}... `))
+      process.env.APEX_ENTRY_NAME = name
+      process.env.APEX_ENTRY_FILE = file
+      await build({ mode: 'sub-entry' })
+      process.stdout.write(chalk.green('done\n'))
+    }
 
+    showBuildStats()
     console.log(chalk.green('\n✅ Build completed successfully!'))
   } catch (error) {
     console.error(chalk.red('Build failed:'), error)

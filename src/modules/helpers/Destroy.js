@@ -8,11 +8,11 @@ export default class Destroy {
   }
 
   clear({ isUpdating }) {
-    if (this.ctx.zoomPanSelection) {
-      this.ctx.zoomPanSelection.destroy()
+    if (this.ctx._zoomPanSelection) {
+      this.ctx._zoomPanSelection.destroy()
     }
-    if (this.ctx.toolbar) {
-      this.ctx.toolbar.destroy()
+    if (this.ctx._toolbar) {
+      this.ctx._toolbar.destroy()
     }
 
     // Cleanup ResizeObserver
@@ -42,10 +42,11 @@ export default class Destroy {
     this.ctx.dimensions = null
     this.ctx.options = null
     this.ctx.crosshairs = null
-    this.ctx.zoomPanSelection = null
+    this.ctx._zoomPanSelection = null
     this.ctx.updateHelpers = null
-    this.ctx.toolbar = null
+    this.ctx._toolbar = null
     this.ctx.localization = null
+    this.ctx._keyboardNavigation = null
     this.ctx.w.globals.tooltip = null
     this.clearDomElements({ isUpdating })
   }

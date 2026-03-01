@@ -1,4 +1,5 @@
 import { morphPaths } from './PathMorphing'
+import { BrowserAPIs } from '../ssr/BrowserAPIs.js'
 
 // Sine ease in-out (matches SVG.js default '<>' easing)
 function easeInOut(t) {
@@ -188,7 +189,7 @@ class SVGAnimationRunner {
         if (this._duringCb) this._duringCb(pos)
 
         if (rawPos < 1) {
-          requestAnimationFrame(tick)
+          BrowserAPIs.requestAnimationFrame(tick)
         } else {
           // Set final path
           if (this._plotTarget) {
@@ -198,7 +199,7 @@ class SVGAnimationRunner {
         }
       }
 
-      requestAnimationFrame(tick)
+      BrowserAPIs.requestAnimationFrame(tick)
     }
 
     if (startDelay > 0) {

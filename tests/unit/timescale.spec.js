@@ -606,3 +606,321 @@ describe('createRawDateString', () => {
     ).toBe('2020-01-01T01:01:59.000Z')
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// determineInterval
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TimeScale.determineInterval', () => {
+  function makeTS() {
+    const chart = createChart('line', [{ data: [0, 1] }])
+    return new TimeScale(chart.w, chart)
+  }
+
+  const HOUR = 1 / 24
+  const MINUTE = HOUR / 60
+  const SECOND = MINUTE / 60
+
+  it('selects "years" when range > 5 years', () => {
+    const ts = makeTS()
+    ts.determineInterval(365 * 6)
+    expect(ts.tickInterval).toBe('years')
+  })
+
+  it('selects "half_year" when range 800-1825 days', () => {
+    const ts = makeTS()
+    ts.determineInterval(900)
+    expect(ts.tickInterval).toBe('half_year')
+  })
+
+  it('selects "months" when range 180-800 days', () => {
+    const ts = makeTS()
+    ts.determineInterval(200)
+    expect(ts.tickInterval).toBe('months')
+  })
+
+  it('selects "months_fortnight" when range 90-180 days', () => {
+    const ts = makeTS()
+    ts.determineInterval(100)
+    expect(ts.tickInterval).toBe('months_fortnight')
+  })
+
+  it('selects "months_days" when range 60-90 days', () => {
+    const ts = makeTS()
+    ts.determineInterval(70)
+    expect(ts.tickInterval).toBe('months_days')
+  })
+
+  it('selects "week_days" when range 30-60 days', () => {
+    const ts = makeTS()
+    ts.determineInterval(40)
+    expect(ts.tickInterval).toBe('week_days')
+  })
+
+  it('selects "days" when range 2-30 days', () => {
+    const ts = makeTS()
+    ts.determineInterval(10)
+    expect(ts.tickInterval).toBe('days')
+  })
+
+  it('selects "hours" when range 2.4h-2days', () => {
+    const ts = makeTS()
+    ts.determineInterval(HOUR * 5)
+    expect(ts.tickInterval).toBe('hours')
+  })
+
+  it('selects "minutes_fives" when range 15min-2.4h', () => {
+    const ts = makeTS()
+    ts.determineInterval(MINUTE * 30)
+    expect(ts.tickInterval).toBe('minutes_fives')
+  })
+
+  it('selects "minutes" when range 5-15 minutes', () => {
+    const ts = makeTS()
+    ts.determineInterval(MINUTE * 8)
+    expect(ts.tickInterval).toBe('minutes')
+  })
+
+  it('selects "seconds_tens" when range 1-5 minutes', () => {
+    const ts = makeTS()
+    ts.determineInterval(MINUTE * 2)
+    expect(ts.tickInterval).toBe('seconds_tens')
+  })
+
+  it('selects "seconds_fives" when range 20s-1min', () => {
+    const ts = makeTS()
+    ts.determineInterval(SECOND * 30)
+    expect(ts.tickInterval).toBe('seconds_fives')
+  })
+
+  it('selects "seconds" as default for very short ranges', () => {
+    const ts = makeTS()
+    ts.determineInterval(SECOND * 5)
+    expect(ts.tickInterval).toBe('seconds')
+  })
+
+  // Boundary: exactly at the 5-year threshold
+  it('selects "half_year" at exactly 5 years (boundary)', () => {
+    const ts = makeTS()
+    ts.determineInterval(365 * 5)
+    expect(ts.tickInterval).toBe('half_year')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _getYear  (year rollover across month boundaries)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TimeScale._getYear', () => {
+  function makeTS() {
+    const chart = createChart('line', [{ data: [0, 1] }])
+    return new TimeScale(chart.w, chart)
+  }
+
+  it('returns currentYear when month < 12 and yrCounter = 0', () => {
+    const ts = makeTS()
+    expect(ts._getYear(2020, 6, 0)).toBe(2020)
+  })
+
+  it('increments year when month >= 12 (rollover)', () => {
+    const ts = makeTS()
+    expect(ts._getYear(2020, 12, 0)).toBe(2021)
+    expect(ts._getYear(2020, 24, 0)).toBe(2022)
+  })
+
+  it('adds yrCounter on top of the month-based increment', () => {
+    const ts = makeTS()
+    expect(ts._getYear(2020, 0, 2)).toBe(2022)
+    expect(ts._getYear(2020, 12, 1)).toBe(2022)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// calculateTimeScaleTicks — allSeriesCollapsed early-return
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TimeScale.calculateTimeScaleTicks edge cases', () => {
+  it('returns empty array and clears labels when all series are collapsed', () => {
+    const chart = createChart('line', [{ data: [0, 1] }])
+    chart.w.globals.allSeriesCollapsed = true
+    const ts = new TimeScale(chart.w, chart)
+    const result = ts.calculateTimeScaleTicks(range.days[0], range.days[1])
+    expect(result).toEqual([])
+    expect(chart.w.labelData.labels).toEqual([])
+    expect(chart.w.labelData.timescaleLabels).toEqual([])
+  })
+
+  it('sets disableZoomIn when range is shorter than MIN_ZOOM_DAYS', () => {
+    const chart = createChart('line', [{ data: [0, 1] }])
+    const ts = new TimeScale(chart.w, chart)
+    // 1-second range — well below the minimum zoom threshold
+    const minX = new Date('2017-02-02T02:00:00Z').getTime()
+    const maxX = minX + 1000
+    ts.calculateTimeScaleTicks(minX, maxX)
+    expect(chart.w.interact.disableZoomIn).toBe(true)
+    expect(chart.w.interact.disableZoomOut).toBe(false)
+  })
+
+  it('sets disableZoomOut when range exceeds 50 000 days', () => {
+    const chart = createChart('line', [{ data: [0, 1] }])
+    const ts = new TimeScale(chart.w, chart)
+    const minX = new Date('1900-01-01T00:00:00Z').getTime()
+    const maxX = minX + 50001 * 24 * 60 * 60 * 1000
+    ts.calculateTimeScaleTicks(minX, maxX)
+    expect(chart.w.interact.disableZoomOut).toBe(true)
+    expect(chart.w.interact.disableZoomIn).toBe(false)
+  })
+
+  it('resets both zoom flags for a normal range', () => {
+    const chart = createChart('line', [{ data: [0, 1] }])
+    // Prime them to true first
+    chart.w.interact.disableZoomIn = true
+    chart.w.interact.disableZoomOut = true
+    const ts = new TimeScale(chart.w, chart)
+    ts.calculateTimeScaleTicks(range.days[0], range.days[1])
+    expect(chart.w.interact.disableZoomIn).toBe(false)
+    expect(chart.w.interact.disableZoomOut).toBe(false)
+  })
+
+  it('returns at least one tick and correct unit for each interval type', () => {
+    // In jsdom gridWidth=0 so positions are NaN — we verify tick count and
+    // unit correctness rather than position ordering (position math is tested
+    // implicitly by the existing generateHourScale no-overlap tests).
+    const cases = [
+      { label: 'years',         bounds: range.years,         expectedUnit: 'year'   },
+      { label: 'months',        bounds: range.months,        expectedUnit: 'month'  },
+      { label: 'days',          bounds: range.days,          expectedUnit: 'day'    },
+      { label: 'hours',         bounds: range.hours,         expectedUnit: 'hour'   },
+      { label: 'minutes_fives', bounds: range.minutes_fives, expectedUnit: 'minute' },
+      { label: 'seconds_tens',  bounds: range.seconds_tens,  expectedUnit: 'second' },
+    ]
+    cases.forEach(({ label, bounds: [minX, maxX], expectedUnit }) => {
+      const chart = createChart('line', [{ data: [0, 1] }])
+      const ts = new TimeScale(chart.w, chart)
+      const ticks = ts.calculateTimeScaleTicks(minX, maxX)
+      expect(ticks.length, `${label} should produce ticks`).toBeGreaterThan(0)
+      // At least one tick should carry the primary unit for that interval
+      const hasExpectedUnit = ticks.some((t) => t.unit === expectedUnit)
+      expect(hasExpectedUnit, `${label} should contain a "${expectedUnit}" tick`).toBe(true)
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// formatDates
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TimeScale.formatDates', () => {
+  function makeTS(xaxisOverride = {}) {
+    const chart = createChartWithOptions({
+      chart: { type: 'line' },
+      series: [{ data: [0, 1] }],
+      xaxis: { type: 'datetime', labels: { datetimeUTC: true, ...xaxisOverride } },
+    })
+    return new TimeScale(chart.w, chart)
+  }
+
+  it('returns an object with dateString, position, value, unit, year, month per tick', () => {
+    const ts = makeTS()
+    const ticks = ts.calculateTimeScaleTicks(range.months[0], range.months[1])
+    const formatted = ts.formatDates(ticks)
+    formatted.forEach((item) => {
+      expect(item).toHaveProperty('dateString')
+      expect(item).toHaveProperty('position')
+      expect(item).toHaveProperty('value')
+      expect(item).toHaveProperty('unit')
+      expect(item).toHaveProperty('year')
+      expect(item).toHaveProperty('month')
+    })
+  })
+
+  it('formats month ticks using the datetimeFormatter.month pattern by default', () => {
+    const ts = makeTS()
+    const ticks = ts.calculateTimeScaleTicks(range.months[0], range.months[1])
+    const formatted = ts.formatDates(ticks)
+    const monthTicks = formatted.filter((t) => t.unit === 'month')
+    // Default month format is "MMM 'yy" — value should be a string like "Mar '17"
+    monthTicks.forEach((t) => {
+      expect(typeof t.value).toBe('string')
+      expect(t.value.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('uses xaxis.labels.format when explicitly set', () => {
+    const ts = makeTS({ format: 'yyyy' })
+    const ticks = ts.calculateTimeScaleTicks(range.years[0], range.years[1])
+    const formatted = ts.formatDates(ticks)
+    // Every tick value should be a 4-digit year string
+    formatted.forEach((t) => {
+      expect(t.value).toMatch(/^\d{4}$/)
+    })
+  })
+
+  it('preserves position from the input tick', () => {
+    const ts = makeTS()
+    const ticks = ts.calculateTimeScaleTicks(range.hours[0], range.hours[1])
+    const formatted = ts.formatDates(ticks)
+    ticks.forEach((tick, i) => {
+      expect(formatted[i].position).toBe(tick.position)
+    })
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// removeOverlappingTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('TimeScale.removeOverlappingTS', () => {
+  function makeTS() {
+    const chart = createChartWithOptions({
+      chart: { type: 'line' },
+      series: [{ data: [0, 1] }],
+      xaxis: {
+        type: 'datetime',
+        labels: { datetimeUTC: true, hideOverlappingLabels: true },
+      },
+    })
+    return new TimeScale(chart.w, chart)
+  }
+
+  it('keeps all ticks when positions are well spread apart', () => {
+    const ts = makeTS()
+    const ticks = [
+      { position: 0, value: 'Jan' },
+      { position: 200, value: 'Feb' },
+      { position: 400, value: 'Mar' },
+    ]
+    const result = ts.removeOverlappingTS(ticks)
+    expect(result.length).toBe(3)
+  })
+
+  it('removes ticks that overlap with the previous label', () => {
+    const ts = makeTS()
+    // Label width for a short string will be ~30px; positions 0 and 5 will overlap
+    const ticks = [
+      { position: 0, value: 'Jan 17' },
+      { position: 5, value: 'Feb 17' },   // too close — should be removed
+      { position: 400, value: 'Mar 17' }, // far enough — should be kept
+    ]
+    const result = ts.removeOverlappingTS(ticks)
+    // First tick always kept; second removed; third kept
+    expect(result.length).toBe(2)
+    expect(result[0].value).toBe('Jan 17')
+    expect(result[1].value).toBe('Mar 17')
+  })
+
+  it('returns empty array for empty input', () => {
+    const ts = makeTS()
+    expect(ts.removeOverlappingTS([])).toEqual([])
+  })
+
+  it('always keeps the first tick regardless of spacing', () => {
+    const ts = makeTS()
+    const ticks = [
+      { position: 0, value: 'Only' },
+    ]
+    const result = ts.removeOverlappingTS(ticks)
+    expect(result.length).toBe(1)
+    expect(result[0].value).toBe('Only')
+  })
+})

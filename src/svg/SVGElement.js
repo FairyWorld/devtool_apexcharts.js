@@ -1,3 +1,5 @@
+import { BrowserAPIs } from '../ssr/BrowserAPIs.js'
+
 export default class SVGElement {
   constructor(node) {
     this.node = node
@@ -221,10 +223,7 @@ export default class SVGElement {
   // ---- Text-specific ----
 
   tspan(text) {
-    const tspan = document.createElementNS(
-      'http://www.w3.org/2000/svg',
-      'tspan'
-    )
+    const tspan = BrowserAPIs.createElementNS('http://www.w3.org/2000/svg', 'tspan')
     tspan.textContent = text
     this.node.appendChild(tspan)
     return new SVGElement(tspan)

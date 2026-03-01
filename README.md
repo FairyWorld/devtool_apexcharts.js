@@ -121,6 +121,31 @@ This will render the following chart
 
 <p align="center"><a href="https://apexcharts.com/javascript-chart-demos/column-charts/"><img src="https://apexcharts.com/media/first-bar-chart.svg"></a></p>
 
+### Tree-shaking — ship only what you use
+
+By default `import ApexCharts from 'apexcharts'` includes everything. If you want a smaller bundle, import from `apexcharts/core` and add only the chart types and features you need:
+
+```js
+import ApexCharts from 'apexcharts/core'   // bare class — no chart types, no features
+
+// Chart types
+import 'apexcharts/line'         // line, area, scatter, bubble
+import 'apexcharts/bar'          // bar, column
+// import 'apexcharts/pie'       // pie, donut
+// import 'apexcharts/radial'    // radialBar, radar
+// import 'apexcharts/heatmap'   // heatmap, treemap
+// import 'apexcharts/candlestick'
+
+// Optional features
+import 'apexcharts/features/legend'
+import 'apexcharts/features/toolbar'      // zoom/pan toolbar
+// import 'apexcharts/features/exports'      // SVG/PNG/CSV download
+// import 'apexcharts/features/annotations'
+// import 'apexcharts/features/keyboard'     // keyboard navigation
+```
+
+See [https://apexcharts.com/docs/tree-shaking/](tree-shaking) for the full guide.
+
 ### A little more than the basic
 
 You can create a combination of different charts, sync them and give your desired look with unlimited possibilities.

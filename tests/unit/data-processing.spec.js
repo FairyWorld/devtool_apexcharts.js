@@ -1,5 +1,5 @@
 import Data from '../../src/modules/Data'
-import ApexCharts from '../../src/apexcharts'
+import ApexCharts from '../../src/entries/full'
 import seriesxy from './data/seriesxy.js'
 import { createChart } from './utils/utils.js'
 
