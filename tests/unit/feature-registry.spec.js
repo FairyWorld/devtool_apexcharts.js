@@ -21,7 +21,6 @@ import Exports from '../../src/modules/Exports.js'
 import Legend from '../../src/modules/legend/Legend.js'
 import Toolbar from '../../src/modules/Toolbar.js'
 import ZoomPanSelection from '../../src/modules/ZoomPanSelection.js'
-import Annotations from '../../src/modules/annotations/Annotations.js'
 import KeyboardNavigation from '../../src/modules/accessibility/KeyboardNavigation.js'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -98,7 +97,7 @@ describe('chart renders without optional features', () => {
           { name: 'A', data: [1, 2, 3] },
           { name: 'B', data: [4, 5, 6] },
         ],
-      })
+      }),
     ).not.toThrow()
   })
 
@@ -170,7 +169,10 @@ describe('ctx.<feature> is an instance when registered', () => {
 
   it('ctx.toolbar is a Toolbar instance (lazy getter)', () => {
     InitCtxVariables._featureRegistry.clear()
-    ApexCharts.registerFeatures({ toolbar: Toolbar, zoomPanSelection: ZoomPanSelection })
+    ApexCharts.registerFeatures({
+      toolbar: Toolbar,
+      zoomPanSelection: ZoomPanSelection,
+    })
     const chart = makeChart()
     // Accessing the getter triggers lazy instantiation.
     expect(chart.ctx.toolbar).toBeInstanceOf(Toolbar)
@@ -198,12 +200,16 @@ describe('export API methods throw when Exports not registered', () => {
 
   it('chart.getSvgString() throws a descriptive error', () => {
     const chart = makeChart()
-    expect(() => chart.getSvgString()).toThrow(/Exports feature is not registered/)
+    expect(() => chart.getSvgString()).toThrow(
+      /Exports feature is not registered/,
+    )
   })
 
   it('chart.exportToCSV() throws a descriptive error', () => {
     const chart = makeChart()
-    expect(() => chart.exportToCSV()).toThrow(/Exports feature is not registered/)
+    expect(() => chart.exportToCSV()).toThrow(
+      /Exports feature is not registered/,
+    )
   })
 })
 
@@ -244,7 +250,9 @@ describe('annotations public API is null-safe without Annotations registered', (
 
   it('chart.addXaxisAnnotation() does not throw', () => {
     const chart = makeChart()
-    expect(() => chart.addXaxisAnnotation({ x: 1, label: { text: 'hi' } })).not.toThrow()
+    expect(() =>
+      chart.addXaxisAnnotation({ x: 1, label: { text: 'hi' } }),
+    ).not.toThrow()
   })
 
   it('chart.addYaxisAnnotation() does not throw', () => {
